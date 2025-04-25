@@ -10,7 +10,5 @@ export const getConfig = () => {
     jwt_refresh_secret: getSaveEnv('JWT_REFRESH_SECRET'),
     jwt_access_expires: getSaveEnv('JWT_ACCESS_EXPIRES'),
     jwt_refresh_expires: getSaveEnv('JWT_EXPIRES_REFRESH'),
-
-    client_url: getSaveEnv('CLIENT_URL'),
   };
 };
