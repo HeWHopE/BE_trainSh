@@ -1,0 +1,6 @@
+# GitHub for HeWHopE account
+
+Host github.com-HeWHopE
+HostName github.com
+User git
+Idenano ~/.ssh/configntityFile /Users/admin/.ssh/id_main
