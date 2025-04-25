@@ -47,7 +47,7 @@ export class TrainService {
 
   async findByUserId(userId: number): Promise<TrainDto[]> {
     const trains = await this.prisma.train.findMany({
-      where: { userId }, // Assuming there's a `userId` field in your `train` model
+      where: { userId },
     });
 
     return trains ? trains : [];

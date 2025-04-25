@@ -51,7 +51,6 @@ export class AuthService {
   }
 
   async signUp(data: SignUpDto): Promise<AuthResponse> {
-    // Check if the user already exists using Prisma
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -64,7 +63,6 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Create a new user using Prisma
     const newUser = await this.prisma.user.create({
       data: {
         email: data.email,
@@ -83,7 +81,6 @@ export class AuthService {
   }
 
   async signIn(data: SignInDto): Promise<AuthResponse> {
-    // Find the user by email using Prisma
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -94,7 +91,6 @@ export class AuthService {
       );
     }
 
-    // Check if the password is valid
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
 
     if (!isPasswordValid) {
@@ -120,7 +116,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    // Find the user by ID using Prisma
     const user = await this.prisma.user.findUnique({
       where: { id: decoded.id },
     });

@@ -4,7 +4,7 @@ export function setupCors(app: INestApplication) {
   app.enableCors({
     origin: '*',
     credentials: true,
-    allowedHeaders: '*', // Allow all headers
+    allowedHeaders: '*',
 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
