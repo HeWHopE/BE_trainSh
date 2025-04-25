@@ -11,7 +11,6 @@ export const getConfig = () => {
     jwt_access_expires: getSaveEnv('JWT_ACCESS_EXPIRES'),
     jwt_refresh_expires: getSaveEnv('JWT_EXPIRES_REFRESH'),
 
-    api_url: getSaveEnv('API_URL'),
     client_url: getSaveEnv('CLIENT_URL'),
   };
 };
