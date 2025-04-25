@@ -40,9 +40,15 @@ export class TrainService {
   }
 
   async remove(id: number) {
-    return await this.prisma.train.delete({
+    const train = await this.prisma.train.delete({
       where: { id },
     });
+
+    if (train) {
+      return train;
+    } else {
+      throw new NotFoundException('Train was not found');
+    }
   }
 
   async findByUserId(userId: number): Promise<TrainDto[]> {
@@ -53,17 +59,22 @@ export class TrainService {
     return trains ? trains : [];
   }
 
-  async search(query: string): Promise<TrainDto[]> {
+  async search(query: string, userId: number): Promise<TrainDto[]> {
     if (!query) {
       throw new BadRequestException('Query parameter is required');
     }
 
     const trains = await this.prisma.train.findMany({
       where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { origin: { contains: query, mode: 'insensitive' } },
-          { destination: { contains: query, mode: 'insensitive' } },
+        AND: [
+          {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { origin: { contains: query, mode: 'insensitive' } },
+              { destination: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+          { userId: userId },
         ],
       },
     });

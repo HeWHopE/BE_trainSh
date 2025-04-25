@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CreateTrainDto } from '../dtos/create-train.dto';
@@ -14,18 +15,17 @@ import { UpdateTrainDto } from '../dtos/update-train.dto';
 
 import { UserInfo } from 'src/common/decorators/userInfo';
 import { UserPayload } from 'src/common/utils/user-payload';
+import { JwtGuard } from 'src/modules/auth';
 import { TrainDto } from '../dtos/train.dto';
 import { TrainService } from '../services/train.service';
 
+@UseGuards(JwtGuard)
 @Controller('train')
 export class TrainController {
   constructor(private readonly trainService: TrainService) {}
 
   @Post()
-  async create(
-    @Body() createTrainDto: CreateTrainDto,
-    @UserInfo() user: UserPayload,
-  ): Promise<TrainDto> {
+  async create(@Body() createTrainDto: CreateTrainDto): Promise<TrainDto> {
     return this.trainService.create(createTrainDto);
   }
 
@@ -40,8 +40,11 @@ export class TrainController {
   }
 
   @Get('search/search')
-  async search(@Query('query') query: string): Promise<TrainDto[]> {
-    return this.trainService.search(query);
+  async search(
+    @Query('query') query: string,
+    @UserInfo() user: UserPayload,
+  ): Promise<TrainDto[]> {
+    return this.trainService.search(query, Number(user.id));
   }
 
   @Get('user/:id')
@@ -59,6 +62,6 @@ export class TrainController {
 
   @Delete(':id')
   async remove(@Param('id') id: number): Promise<TrainDto> {
-    return this.trainService.remove(id);
+    return this.trainService.remove(Number(id));
   }
 }
