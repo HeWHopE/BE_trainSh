@@ -8,8 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { getConfig } from 'src/config';
 
-import { v4 as uuidv4 } from 'uuid';
-
+import { User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.serice';
 import { AuthResponse, RefreshResponse, SignInDto, SignUpDto } from './dtos';
 
@@ -64,7 +63,6 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const activationLink = uuidv4();
 
     // Create a new user using Prisma
     const newUser = await this.prisma.user.create({
@@ -144,5 +142,17 @@ export class AuthService {
     );
 
     return { access_token };
+  }
+
+  async getById(id: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }
