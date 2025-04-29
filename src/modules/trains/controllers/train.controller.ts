@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Logger,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -55,7 +56,7 @@ export class TrainController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<TrainDto> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<TrainDto> {
     try {
       const train = await this.trainService.findOne(id);
       if (!train) {
@@ -89,10 +90,12 @@ export class TrainController {
   }
 
   @Get('user/:id')
-  async findManyByUserId(@Param('id') id: string): Promise<TrainDto[]> {
+  async findManyByUserId(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<TrainDto[]> {
     try {
       this.logger.log(`Fetching trains for user id ${id}`);
-      return await this.trainService.findByUserId(Number(id));
+      return await this.trainService.findByUserId(id);
     } catch (error) {
       this.logger.error(`Error fetching trains for user id ${id}`, error.stack);
       throw new HttpException(
@@ -104,7 +107,7 @@ export class TrainController {
 
   @Patch(':id')
   async update(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateTrainDto: UpdateTrainDto,
   ): Promise<TrainDto> {
     try {
@@ -120,7 +123,7 @@ export class TrainController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: number): Promise<TrainDto> {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<TrainDto> {
     try {
       this.logger.log(`Deleting train with id ${id}`);
       return await this.trainService.remove(id);
