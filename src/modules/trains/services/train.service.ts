@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { PrismaService } from 'prisma/prisma.serice';
@@ -54,18 +55,41 @@ export class TrainService {
       throw error;
     }
   }
-
-  async update(id: number, updateTrainDto: UpdateTrainDto): Promise<TrainDto> {
+  async update(
+    id: number,
+    updateTrainDto: UpdateTrainDto,
+    userId: number, // Assuming the user's ID is passed in from authentication
+  ): Promise<TrainDto> {
     try {
       this.logger.log(`Updating train with id: ${id}`);
+
+      // Fetch the train to check if the current user is the owner
+      const train = await this.prisma.train.findUnique({
+        where: { id },
+        select: { userId: true }, // Assuming the train record has a 'userId' field
+      });
+
+      if (!train) {
+        throw new NotFoundException('Train not found');
+      }
+
+      // Check if the current user is the owner
+      if (train.userId !== userId) {
+        throw new UnauthorizedException('You are not the owner of this train');
+      }
+
+      // Proceed with the update if the user is the owner
       return await this.prisma.train.update({
         where: { id },
         data: updateTrainDto,
       });
     } catch (error) {
       this.logger.error(`Error updating train with id ${id}`, error.stack);
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Train not found');
+      if (
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error; // Rethrow known exceptions
       }
       throw new BadRequestException('Failed to update train');
     }

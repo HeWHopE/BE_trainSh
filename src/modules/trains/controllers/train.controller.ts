@@ -109,10 +109,11 @@ export class TrainController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateTrainDto: UpdateTrainDto,
+    @UserInfo() user: UserPayload,
   ): Promise<TrainDto> {
     try {
       this.logger.log(`Updating train with id ${id}`);
-      return await this.trainService.update(id, updateTrainDto);
+      return await this.trainService.update(id, updateTrainDto, user.id);
     } catch (error) {
       this.logger.error(`Error updating train with id ${id}`, error.stack);
       throw new HttpException(
