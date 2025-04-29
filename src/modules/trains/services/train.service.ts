@@ -1,84 +1,141 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from 'prisma/prisma.serice';
-import { CreateTrainDto } from '../dtos/create-train.dto';
-import { TrainDto } from '../dtos/train.dto';
-import { UpdateTrainDto } from '../dtos/update-train.dto';
+
+import { CreateTrainDto, TrainDto, UpdateTrainDto } from '../dtos/train.dto';
 
 @Injectable()
 export class TrainService {
+  private readonly logger = new Logger(TrainService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createTrainDto: CreateTrainDto): Promise<TrainDto> {
-    return await this.prisma.train.create({
-      data: createTrainDto,
-    });
+    try {
+      this.logger.log('Creating a new train record');
+      return await this.prisma.train.create({
+        data: createTrainDto,
+      });
+    } catch (error) {
+      this.logger.error('Error creating train', error.stack);
+      throw new BadRequestException('Failed to create train');
+    }
   }
 
   async findAll(): Promise<TrainDto[]> {
-    return await this.prisma.train.findMany();
+    try {
+      return await this.prisma.train.findMany({});
+    } catch (error) {
+      this.logger.error('Error fetching trains', error.stack);
+      throw new BadRequestException('Failed to fetch trains');
+    }
   }
 
   async findOne(id: number): Promise<TrainDto> {
-    const train = await this.prisma.train.findUnique({
-      where: { id },
-    });
+    try {
+      this.logger.log(`Fetching train with id: ${id}`);
+      const train = await this.prisma.train.findUnique({
+        where: { id },
+      });
 
-    if (!train) throw new NotFoundException('Train not found');
+      if (!train) {
+        this.logger.warn(`Train with id ${id} not found`);
+        throw new NotFoundException('Train not found');
+      }
 
-    return train;
+      return train;
+    } catch (error) {
+      this.logger.error(`Error fetching train with id ${id}`, error.stack);
+      throw error;
+    }
   }
 
   async update(id: number, updateTrainDto: UpdateTrainDto): Promise<TrainDto> {
-    return await this.prisma.train.update({
-      where: { id },
-      data: updateTrainDto,
-    });
+    try {
+      this.logger.log(`Updating train with id: ${id}`);
+      return await this.prisma.train.update({
+        where: { id },
+        data: updateTrainDto,
+      });
+    } catch (error) {
+      this.logger.error(`Error updating train with id ${id}`, error.stack);
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Train not found');
+      }
+      throw new BadRequestException('Failed to update train');
+    }
   }
 
-  async remove(id: number) {
-    const train = await this.prisma.train.delete({
-      where: { id },
-    });
-
-    if (train) {
-      return train;
-    } else {
-      throw new NotFoundException('Train was not found');
+  async remove(id: number): Promise<TrainDto> {
+    try {
+      this.logger.log(`Deleting train with id: ${id}`);
+      return await this.prisma.train.delete({
+        where: { id },
+      });
+    } catch (error) {
+      this.logger.error(`Error deleting train with id ${id}`, error.stack);
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Train not found');
+      }
+      throw new BadRequestException('Failed to delete train');
     }
   }
 
   async findByUserId(userId: number): Promise<TrainDto[]> {
-    const trains = await this.prisma.train.findMany({
-      where: { userId },
-    });
-
-    return trains ? trains : [];
+    try {
+      this.logger.log(`Fetching trains for user id: ${userId}`);
+      return await this.prisma.train.findMany({
+        where: { userId },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error fetching trains for user id ${userId}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to fetch trains for user');
+    }
   }
 
-  async search(query: string, userId: number): Promise<TrainDto[]> {
+  async search(
+    query: string,
+    userId: number,
+    page = 1,
+    limit = 10,
+  ): Promise<TrainDto[]> {
     if (!query) {
       throw new BadRequestException('Query parameter is required');
     }
 
-    const trains = await this.prisma.train.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { name: { contains: query, mode: 'insensitive' } },
-              { origin: { contains: query, mode: 'insensitive' } },
-              { destination: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-          { userId: userId },
-        ],
-      },
-    });
+    try {
+      this.logger.log(
+        `Searching trains with query: ${query} for user: ${userId}`,
+      );
+      const offset = (page - 1) * limit;
 
-    return trains;
+      return await this.prisma.train.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { origin: { contains: query, mode: 'insensitive' } },
+                { destination: { contains: query, mode: 'insensitive' } },
+              ],
+            },
+            { userId: userId },
+          ],
+        },
+        skip: offset,
+        take: limit,
+      });
+    } catch (error) {
+      this.logger.error('Error searching trains', error.stack);
+      throw new BadRequestException('Failed to search trains');
+    }
   }
 }
